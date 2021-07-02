@@ -4,7 +4,7 @@
     <div class="camera">
       <div class="camera__container">
         <div class="camera__main">
-          <video ref="video" class="camera__video" autoplay>Video stream not available.</video>
+          <video ref="video" class="camera__video" autoplay playsinline controls="false">Video stream not available.</video>
           <img v-show="takedPhoto" :src="images" class="camera__img" alt="The screen capture will appear in this box."> 
 
         </div>
@@ -17,6 +17,7 @@
     </div>
 
     <div>{{error}}</div>
+    <div>{{devices}}</div>
 
 
     <canvas ref="canvas"></canvas>
@@ -40,6 +41,7 @@ export default {
     canvas: null,
     images: '',
     error: null,
+    devices: []
 
   }),
 
@@ -55,12 +57,24 @@ export default {
     async post(){
       const values = await axios.post(this.url, { value: this.input })     
     },
+    async openCamera(cameraId, minWidth, minHeight) {
+      const constraints = {
+        'audio': {'echoCancellation': true},
+        'video': {
+          'deviceId': cameraId,
+          'width': {'min': minWidth},
+          'height': {'min': minHeight}
+          }
+        }
 
+      return await navigator.mediaDevices.getUserMedia(constraints)
+    },
+    async getConnectedDevices(type) {
+      const devices = await window.navigator.mediaDevices.enumerateDevices();
+      return devices.filter(device => device.kind === type)
+    },
     handleError(error){
-      console.log(typeof error)
       console.log(error)
-      console.log(error.message)
-      console.log(error instanceof Error )
 
       if (!this.error && error && error.constraint && error.constraint === 'facingMode'){
         this.error = 'facingMode'        
@@ -97,8 +111,9 @@ export default {
 
     },
 
-
     start() {
+      this.devices = this.getConnectedDevices('videoinput')
+            
       window.navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { exact: "environment" } } })
         .then((stream) => {
           this.video.srcObject = stream
