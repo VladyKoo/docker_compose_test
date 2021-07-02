@@ -16,9 +16,21 @@
       </div>
     </div>
 
-    <div>{{error}}</div>
-    <div>{{devices}}</div>
-
+    <div>
+      <ul>
+        <li>error: {{ error }}</li>
+      </ul>
+    </div>
+    <div v-for="(device, index) of devices" :key="index" class="device">
+      <div class="device__key">deviceId</div>
+      <div class="device__value">{{device.deviceId }}</div>
+      <div class="device__key">kind</div>
+      <div class="device__value">{{device.kind }}</div>
+      <div class="device__key">label</div>
+      <div class="device__value device__value_btn" @click.prevent="deviceId = device.deviceId">{{device.label }}</div>
+      <div class="device__key">groupId</div>
+      <div class="device__value">{{device.groupId }}</div>
+    </div>
 
     <canvas ref="canvas"></canvas>
   </div>
@@ -34,20 +46,21 @@ export default {
     width: 640,
     height: 480,
 
-    streaming: false,
     takedPhoto: false,
 
     video: null,
     canvas: null,
     images: '',
     error: null,
-    devices: []
-
+    devices: [],
+    deviceId: null,
   }),
 
   mounted(){  
     this.video = this.$refs.video
     this.canvas = this.$refs.canvas
+    this.getConnectedDevices('videoinput')
+
   },
 
   methods: {
@@ -57,21 +70,15 @@ export default {
     async post(){
       const values = await axios.post(this.url, { value: this.input })     
     },
-    async openCamera(cameraId, minWidth, minHeight) {
-      const constraints = {
-        'audio': {'echoCancellation': true},
-        'video': {
-          'deviceId': cameraId,
-          'width': {'min': minWidth},
-          'height': {'min': minHeight}
-          }
-        }
 
-      return await navigator.mediaDevices.getUserMedia(constraints)
-    },
-    async getConnectedDevices(type) {
-      const devices = await window.navigator.mediaDevices.enumerateDevices();
-      return devices.filter(device => device.kind === type)
+    getConnectedDevices(type) {      
+      window.navigator.mediaDevices.enumerateDevices()
+        .then((devices) => {          
+          this.devices = devices.filter((el) => el.kind === type) 
+        })
+        .catch((err) => {
+          console.log(err.name + ": " + err.message);
+        });
     },
     handleError(error){
       console.log(error)
@@ -112,9 +119,12 @@ export default {
     },
 
     start() {
-      this.devices = this.getConnectedDevices('videoinput')
-            
-      window.navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { exact: "environment" } } })
+      const video = this.deviceId ? { 'deviceId': this.deviceId } : { facingMode: { exact: "environment" } }
+      const constraints = {
+        audio: false,
+        video
+      }
+      window.navigator.mediaDevices.getUserMedia(constraints)
         .then((stream) => {
           this.video.srcObject = stream
         })
@@ -125,11 +135,9 @@ export default {
 
     clearphoto() {
       this.takedPhoto = false
-      this.streaming = false
       this.images = ''
-      this.video.srcObject = null
-      this.error = null
     },
+
     take() {      
       var context = this.canvas.getContext('2d')    
       this.width = this.video.clientWidth
@@ -163,7 +171,7 @@ body {
   max-width: 1200px;
   min-width: 290px;
   margin: 0 auto;
-  padding: 30px 10px 0 10px;
+  padding: 30px 10px 50px 10px;
 }
 
 .camera {
@@ -267,6 +275,29 @@ body {
 
 canvas {
   display:none;
+}
+
+.device{
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 5px;
+  margin-bottom: 20px;
+}
+
+.device__key {
+  background-color: rgb(111, 111, 233);
+  border-radius: 4px;
+  padding: 5px;
+}
+
+.device__value {
+  background-color: green;
+  border-radius: 4px;
+  padding: 5px;
+}
+
+.device__value_btn {
+  cursor: pointer;
 }
 
 </style>
