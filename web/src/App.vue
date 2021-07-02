@@ -1,18 +1,25 @@
 <template>
-  <div>
+  <div class="container">
 
     <div class="camera">
-      <video id="video">Video stream not available.</video>
-      <button @click.prevent="startbutton">Take photo</button>
+      <div class="camera__container">
+        <div class="camera__main">
+          <video ref="video" class="camera__video" autoplay>Video stream not available.</video>
+          <img v-show="takedPhoto" :src="images" class="camera__img" alt="The screen capture will appear in this box."> 
+
+        </div>
+        <div class="camera__footer">
+          <button class="btn start-button" @click.prevent="start">Start stream</button>
+          <button class="btn take-button" @click.prevent="take"><div></div><div></div></button>
+          <button class="btn stop-button" @click.prevent="clearphoto">Clear photo</button>
+        </div>
+      </div>
     </div>
 
-    <canvas id="canvas">
-    </canvas>
+    <div>{{error}}</div>
 
-    <div class="output">
-      <img id="photo" alt="The screen capture will appear in this box."> 
-    </div>
 
+    <canvas ref="canvas"></canvas>
   </div>
 </template>
 
@@ -23,21 +30,22 @@ export default {
   name: 'App',
   data: () => ({
     url: 'http://localhost:80/api',
-    width: 320,
-    height: 0,
+    width: 640,
+    height: 480,
 
     streaming: false,
+    takedPhoto: false,
 
     video: null,
     canvas: null,
-    photo: null,
+    images: '',
+    error: null,
 
   }),
 
   mounted(){  
-    console.log(this)
-    
-    this.startup()
+    this.video = this.$refs.video
+    this.canvas = this.$refs.canvas
   },
 
   methods: {
@@ -48,125 +56,202 @@ export default {
       const values = await axios.post(this.url, { value: this.input })     
     },
 
+    handleError(error){
+      console.log(typeof error)
+      console.log(error)
+      console.log(error.message)
+      console.log(error instanceof Error )
 
-    startup() {
-      this.video = document.getElementById('video');
-      this.canvas = document.getElementById('canvas');
-      this.photo = document.getElementById('photo');
+      if (!this.error && error && error.constraint && error.constraint === 'facingMode'){
+        this.error = 'facingMode'        
+        window.navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+          .then((stream) => {
+            this.video.srcObject = stream
+          })
+          .catch((err)=> {
+            this.handleError(err)
+          });         
+      }
 
-      window.navigator.mediaDevices.getUserMedia({video: true, audio: false})
-      .then(function(stream) {
-        this.video.srcObject = stream;
-        this.video.play();
-      })
-      .catch(function(err) {
-        console.log("An error occurred: " + err);
-      });
+      if (!this.error && error.message === 'Requested device not found' ){
+        this.error = error.message  
+        window.navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+          .then((stream) => {
+            this.video.srcObject = stream
+          })
+          .catch((err)=> {
+            this.handleError(err)
+          });  
+      }
 
-      this.video.addEventListener('canplay', function(ev){
-        if (!this.streaming) {
-          this.height = this.video.videoHeight / (this.video.videoWidth/width);        
-       
-          if (isNaN(this.height)) {
-            this.height = this.width / (4/3);
-          }
-        
-          this.video.setAttribute('width', this.width);
-          this.video.setAttribute('height', this.height);
-          this.canvas.setAttribute('width', this.width);
-          this.canvas.setAttribute('height', this.height);
-          this.streaming = true;
-        }
-      }, false);
-      
-      this.clearphoto();
+      if (!this.error && error.message === 'Permission denied' ){
+        this.error = error.message  
+        window.navigator.mediaDevices.getUserMedia({ audio: false, video: true })
+          .then((stream) => {
+            this.video.srcObject = stream
+          })
+          .catch((err)=> {
+            this.handleError(err)
+          });  
+      }
+
+    },
+
+
+    start() {
+      window.navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { exact: "environment" } } })
+        .then((stream) => {
+          this.video.srcObject = stream
+        })
+        .catch((err)=> {
+          this.handleError(err)
+        });  
     },
 
     clearphoto() {
-      var context = this.canvas.getContext('2d');
-      context.fillStyle = "#AAA";
-      context.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-      var data = this.canvas.toDataURL('image/png');
-      this.photo.setAttribute('src', data);
+      this.takedPhoto = false
+      this.streaming = false
+      this.images = ''
+      this.video.srcObject = null
+      this.error = null
     },
+    take() {      
+      var context = this.canvas.getContext('2d')    
+      this.width = this.video.clientWidth
+      this.height = this.video.clientHeight
 
-    takepicture() {
-      var context = this.canvas.getContext('2d');
-      if (this.width && this.height) {
-        this.canvas.width = this.width;
-        this.canvas.height = this.height;
-        context.drawImage(this.video, 0, 0, this.width, this.height);
-      
-        var data = this.canvas.toDataURL('image/png');
-        this.photo.setAttribute('src', data);
-      } else {
-        this.clearphoto();
-      }
+      this.canvas.width = this.width
+      this.canvas.height = this.height
+      context.drawImage(this.video, 0, 0, this.width, this.height)
+    
+      var data = this.canvas.toDataURL('image/png')       
+      this.images = data
+
+      this.takedPhoto = true
     },
-
-    startbutton(){
-      this.takepicture();
-    }
-
   }
 }
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-#video {
-  border: 1px solid black;
-  box-shadow: 2px 2px 3px black;
-  width:320px;
-  height:240px;
+
+* {
+  box-sizing: border-box;
 }
 
-#photo {
-  border: 1px solid black;
-  box-shadow: 2px 2px 3px black;
-  width:320px;
-  height:240px;
+body {
+  padding: 0px;
+  margin: 0px;
 }
 
-#canvas {
-  display:none;
+.container {
+  max-width: 1200px;
+  min-width: 290px;
+  margin: 0 auto;
+  padding: 30px 10px 0 10px;
 }
 
 .camera {
-  width: 340px;
-  display:inline-block;
 }
 
-.output {
-  width: 340px;
-  display:inline-block;
+.camera__container {
+  position: relative;
 }
 
-#startbutton {
-  display:block;
-  position:relative;
-  margin-left:auto;
-  margin-right:auto;
-  bottom:32px;
-  background-color: rgba(0, 150, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0px 0px 1px 2px rgba(0, 0, 0, 0.2);
-  font-size: 14px;
-  font-family: "Lucida Grande", "Arial", sans-serif;
-  color: rgba(255, 255, 255, 1.0);
+.camera__main {
+  position: relative;
+  border: 1px solid #000;
+  width: 100%;
+  border-top-right-radius: 10px;
+  border-top-left-radius: 10px;
+  overflow: hidden;
+  background-color: grey;
 }
 
-.contentarea {
-  font-size: 16px;
-  font-family: "Lucida Grande", "Arial", sans-serif;
-  width: 760px;
+.camera__video {
+  width: 100%;
 }
+.camera__img {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  /* width: 100%;
+  height: 100%; */
+  object-fit: cover;
+}
+
+.camera__footer {
+  background-color: #000;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  width: 100%;
+  height: 80px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.take-button {
+  position: relative;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  padding: 0px;
+  cursor: pointer;
+}
+
+.take-button div:nth-child(1) {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+}
+
+.take-button div:nth-child(2) {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  transition: all 0.2s ease-in;
+}
+
+.take-button:active div:nth-child(2){
+  transform: scale(0.75);
+}
+
+.btn {
+  border: none;
+}
+
+.start-button {
+  background-color: green;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.stop-button {
+  background-color: rgb(255, 53, 53);
+  border-radius: 10px;  
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+
+canvas {
+  display:none;
+}
+
 </style>
