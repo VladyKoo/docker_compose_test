@@ -77,28 +77,34 @@ export default {
     getConnectedDevices(type) {      
       window.navigator.mediaDevices.enumerateDevices()
         .then((devices) => {
-          let filtredDivices = devices.filter((el) => el.kind === type && el.label && el.deviceId )
-          if (!filtredDivices.length) return
+          let filtredDevices = devices.filter((el) => el.kind === type && el.label && el.deviceId )
+          if (!filtredDevices.length) return
 
-          if (filtredDivices.length > 2) {
+          if (filtredDevices.length > 2) {
             let front = []
             let back = []
             let undef = []
 
-            filtredDivices.forEach((el) => {
+            filtredDevices.forEach((el) => {
               const str = el.label.toLowerCase()
-              if (str.includes('back') && str.includes('задней')) {
+              if (str.includes('back') || str.includes('задней')) {
                 back.push(el)
-              } else if (str.includes('front') && str.includes('передней')) {
+              } else if (str.includes('front') || str.includes('передней')) {
                 front.push(el)
               } else undef.push (el) 
             })
 
-            if (front.length > 1) front = front.sort()
-            if (back.length > 1) back = back.sort()
+            const sortFunc = (a, b) => {
+              if (a.label < b.label) return -1            
+              if (a.label > b.label) return 1
+              return 0;
+            }
+
+            front = front.sort(sortFunc)
+            back = back.sort(sortFunc)
 
             this.devices = [front[0], back[0]]
-          } else this.devices = filtredDivices
+          } else this.devices = filtredDevices
 
           this.currentDivice = this.devices[0]
         })
