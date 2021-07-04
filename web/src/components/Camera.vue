@@ -30,6 +30,8 @@
         </div>
       </div>
     </div>
+    <canvas ref="canvas"></canvas>
+
 
     <transition>
       <div v-show="error" class="error">
@@ -38,40 +40,39 @@
       </div>
     </transition>
 
-
-    <div class="btn-container">
-      <button
-        class="btn show-button"
-        :class="{'hide-button': showDevices}"
-        @click="showDevices = !showDevices"
-      >
-        {{ showDevices ? 'Hidden devices' : 'Show devices' }}
-      </button>
-    </div>
-
+    <button
+      class="btn show-button"
+      :class="{'hide-button': showDevices}"
+      @click="showDevices = !showDevices"
+    >
+      {{ showDevices ? 'Hidden devices' : 'Show devices' }}
+    </button>
     <transition>
-      <div v-if="showDevices">
-        <span>Current device</span>
-        <div v-if="currentDivice" class="device">
-          <div class="device__key">deviceId</div>
-          <div class="device__value">{{currentDivice.deviceId }}</div>
-          <div class="device__key">label</div>
-          <div class="device__value" >{{currentDivice.label }}</div>
-        </div>
-
-        <span>Available devices</span>
-        <div v-for="(device, index) of devices" :key="index" class="device">
-          <div class="device__key">deviceId</div>
-          <div class="device__value">{{device.deviceId }}</div>
-          <div class="device__key">label</div>
-          <div class="device__value device__value_btn" @click.prevent="currentDivice = device">{{device.label }}</div>
-        </div>
+      <div v-if="showDevices"> 
+        <div v-if="devices.length || allDevices.length">              
+          <div v-if="currentDivice" class="device">
+            <div class="device__title">Current device</div>
+            <div>
+              <span class="device__value" >{{currentDivice.label }}</span>
+            </div>
+          </div>
+          <div v-if="devices.length" class="device">
+            <div class="device__title">Available devices:</div>
+            <div v-for="(device, index) of devices" :key="index" class="device__list">
+              <span class="device__value device__value_btn" @click.prevent="currentDivice = device">{{device.label }}</span>
+            </div>
+          </div>
+          <div v-if="allDevices.length" class="device">
+            <div class="device__title">All devices:</div>
+            <div v-for="(device, index) of allDevices" :key="index" class="device__list">
+              <span class="device__value device__value_btn" @click.prevent="currentDivice = device">{{device.label }}</span>
+            </div>
+          </div>
+        </div> 
+        <div v-else >Don't detected devises</div>
       </div>
     </transition>
 
-
-
-    <canvas ref="canvas"></canvas>
   </div>
 </template>
 
@@ -88,6 +89,7 @@ export default {
     canvas: null,
     error: null,
     devices: [],
+    allDevices: [],
     currentDivice: null,
     image: {
       blob: null,
@@ -99,11 +101,17 @@ export default {
     showDevices: false,
   }),
 
-  mounted(){  
+  async mounted(){  
     this.canvas = this.$refs.canvas
     this.video = this.$refs.video
 
-    this.getConnectedDevices('videoinput')
+    navigator.mediaDevices.ondevicechange = async (event) => {
+      await this.getConnectedDevices('videoinput')
+      this.startStriming()     
+    }
+
+    await this.getConnectedDevices('videoinput')
+    
   },  
 
   methods: {
@@ -121,73 +129,68 @@ export default {
       }, 4000)
     },
 
-    getConnectedDevices(type) {      
-      window.navigator.mediaDevices.enumerateDevices()
-        .then((devices) => {
-          let filtredDevices = devices.filter((el) => el.kind === type && el.label && el.deviceId )
-          if (!filtredDevices.length) return
+    async getConnectedDevices(type) {     
+      try {
+        let devices = await window.navigator.mediaDevices.enumerateDevices()
+        
+        let filtredDevices = devices.filter((el) => el.kind === type && el.label && el.deviceId )
+        if (!filtredDevices.length) return
 
-          if (filtredDevices.length > 2) {
-            let front = []
-            let back = []
-            let undef = []
+        this.allDevices = filtredDevices
+        if (filtredDevices.length > 2) {
+          let front = []
+          let back = []
+          let undef = []
 
-            filtredDevices.forEach((el) => {
-              const str = el.label.toLowerCase()
-              if (str.includes('back') || str.includes('задней')) {
-                back.push(el)
-              } else if (str.includes('front') || str.includes('передней')) {
-                front.push(el)
-              } else undef.push (el) 
-            })
+          filtredDevices.forEach((el) => {
+            const str = el.label.toLowerCase()
+            if (str.includes('back') || str.includes('задней')) {
+              back.push(el)
+            } else if (str.includes('front') || str.includes('передней')) {
+              front.push(el)
+            } else undef.push (el) 
+          })
 
-            const sortFunc = (a, b) => {
-              if (a.label < b.label) return -1            
-              if (a.label > b.label) return 1
-              return 0;
-            }
+          const sortFunc = (a, b) => {
+            if (a.label < b.label) return -1            
+            if (a.label > b.label) return 1
+            return 0;
+          }
 
-            front = front.sort(sortFunc)
-            back = back.sort(sortFunc)
+          front = front.sort(sortFunc)
+          back = back.sort(sortFunc)
 
-            this.devices = [front[0], back[0]]
-          } else this.devices = filtredDevices
+          this.devices = [front[0], back[0]]
+        } else this.devices = filtredDevices
 
-          this.currentDivice = this.devices[0]
-        })
-        .catch((err) => {
-          console.error(err.name + ": " + err.message)
-        });
+        this.currentDivice = this.devices[0]
+
+      } catch (error) {
+        this.setError(error.message)
+      }       
     },
 
     handleError(error){
       console.log(error)
 
       if (!this.error && error && error.constraint && error.constraint === 'facingMode'){
-        this.setError('facingMode' )       
-        const result = window.confirm(this.error)
-        console.log(result)
-        
+        this.setError('facingMode' )
       }
 
       if (!this.error && error.message === 'Requested device not found' ){
         this.setError(error.message)
-        const result = window.confirm(this.error)
-        console.log(result)        
       }
 
       if (!this.error && error.message === 'Permission denied' ){
         this.setError(error.message)
-        const result = window.confirm(this.error)
-        console.log(result) 
       }
 
     },
 
-    startStriming() {
+    startStriming() {      
       const constraints = {
         audio: false,
-        video: this.currentDivice && this.currentDivice.deviceId ? { 'deviceId': this.currentDivice.deviceId } : { facingMode: { exact: "environment" } }
+        video: this.currentDivice && this.currentDivice.deviceId ? { 'deviceId': this.currentDivice.deviceId } : true
       }
 
       window.navigator.mediaDevices.getUserMedia(constraints)
@@ -210,13 +213,13 @@ export default {
       this.clearPhoto()
     },
 
-    changeCameras(){
-      this.stopStriming()
+    changeCameras(){      
       if (!this.currentDivice || this.devices.length < 2) return this.setError('You have only one camera')
+      this.stopStriming()
+
       const newCurrentDivice = this.devices.filter((el) => el.deviceId !== this.currentDivice.deviceId)
       this.currentDivice = newCurrentDivice[0]
-      
-      this.clearPhoto()
+
       this.startStriming()
     },
 
@@ -237,6 +240,7 @@ export default {
     },
 
     clearPhoto() {
+      if (!this.image.url) return
       this.image.url = ''
       this.image.blob = null
     },
@@ -371,6 +375,7 @@ canvas {
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-bottom: 20px;
 }
 
 .hide-button {
@@ -378,22 +383,24 @@ canvas {
 }
 
 .device{
-  display: grid;
-  grid-template-columns: 100px 1fr;
-  gap: 5px;
   margin-bottom: 20px;
 }
 
-.device__key {
-  background-color: rgb(111, 111, 233);
-  border-radius: 4px;
-  padding: 5px;
+.device__title {
+  padding-bottom: 10px;
+}
+
+.device__list {
+  display: flex;
+  flex-direction: column;
+  align-items:flex-start
 }
 
 .device__value {
   background-color: green;
   border-radius: 4px;
   padding: 5px;
+  margin-bottom: 10px;
 }
 
 .device__value_btn {

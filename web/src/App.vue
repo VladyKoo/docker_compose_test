@@ -47,10 +47,4 @@ body {
   margin: 0 auto;
   padding: 30px 10px 50px 10px;
 }
-
-.btn-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-}
 </style>
