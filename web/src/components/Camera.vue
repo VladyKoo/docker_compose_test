@@ -31,33 +31,45 @@
       </div>
     </div>
 
-    <div v-if="currentDivice" class="device">
-      <div class="device__key">deviceId</div>
-      <div class="device__value">{{currentDivice.deviceId }}</div>
-      <div class="device__key">kind</div>
-      <div class="device__value">{{currentDivice.kind }}</div>
-      <div class="device__key">label</div>
-      <div class="device__value" >{{currentDivice.label }}</div>
-      <div class="device__key">groupId</div>
-      <div class="device__value">{{currentDivice.groupId }}</div>
+    <transition>
+      <div v-show="error" class="error">
+        <span>Error: </span>
+        <span class="error__message">{{ error }}</span>
+      </div>
+    </transition>
+
+
+    <div class="btn-container">
+      <button
+        class="btn show-button"
+        :class="{'hide-button': showDevices}"
+        @click="showDevices = !showDevices"
+      >
+        {{ showDevices ? 'Hidden devices' : 'Show devices' }}
+      </button>
     </div>
 
-    <div>
-      <ul>
-        <li>error: {{ error }}</li>
-      </ul>
-    </div>
+    <transition>
+      <div v-if="showDevices">
+        <span>Current device</span>
+        <div v-if="currentDivice" class="device">
+          <div class="device__key">deviceId</div>
+          <div class="device__value">{{currentDivice.deviceId }}</div>
+          <div class="device__key">label</div>
+          <div class="device__value" >{{currentDivice.label }}</div>
+        </div>
 
-    <div v-for="(device, index) of devices" :key="index" class="device">
-      <div class="device__key">deviceId</div>
-      <div class="device__value">{{device.deviceId }}</div>
-      <div class="device__key">kind</div>
-      <div class="device__value">{{device.kind }}</div>
-      <div class="device__key">label</div>
-      <div class="device__value device__value_btn" @click.prevent="currentDivice = device">{{device.label }}</div>
-      <div class="device__key">groupId</div>
-      <div class="device__value">{{device.groupId }}</div>
-    </div>
+        <span>Available devices</span>
+        <div v-for="(device, index) of devices" :key="index" class="device">
+          <div class="device__key">deviceId</div>
+          <div class="device__value">{{device.deviceId }}</div>
+          <div class="device__key">label</div>
+          <div class="device__value device__value_btn" @click.prevent="currentDivice = device">{{device.label }}</div>
+        </div>
+      </div>
+    </transition>
+
+
 
     <canvas ref="canvas"></canvas>
   </div>
@@ -84,6 +96,7 @@ export default {
       type: 'image/png'
     },
     striming: false,
+    showDevices: false,
   }),
 
   mounted(){  
@@ -91,7 +104,7 @@ export default {
     this.video = this.$refs.video
 
     this.getConnectedDevices('videoinput')
-  },
+  },  
 
   methods: {
     async get(){
@@ -99,6 +112,13 @@ export default {
     },
     async post(){
       const values = await axios.post(this.url, { value: this.input })     
+    },
+
+    setError(err) {
+      this.error = err
+      setTimeout(()=>{
+        this.error = null
+      }, 4000)
     },
 
     getConnectedDevices(type) {      
@@ -144,20 +164,20 @@ export default {
       console.log(error)
 
       if (!this.error && error && error.constraint && error.constraint === 'facingMode'){
-        this.error = 'facingMode'        
+        this.setError('facingMode' )       
         const result = window.confirm(this.error)
         console.log(result)
         
       }
 
       if (!this.error && error.message === 'Requested device not found' ){
-        this.error = error.message  
+        this.setError(error.message)
         const result = window.confirm(this.error)
         console.log(result)        
       }
 
       if (!this.error && error.message === 'Permission denied' ){
-        this.error = error.message  
+        this.setError(error.message)
         const result = window.confirm(this.error)
         console.log(result) 
       }
@@ -192,19 +212,16 @@ export default {
 
     changeCameras(){
       this.stopStriming()
-
-      const newArr = []
-
-      if (!this.currentDivice || this.devices.length < 2) return 
+      if (!this.currentDivice || this.devices.length < 2) return this.setError('You have only one camera')
       const newCurrentDivice = this.devices.filter((el) => el.deviceId !== this.currentDivice.deviceId)
       this.currentDivice = newCurrentDivice[0]
       
-      // this.clearPhoto()
-      // this.startStriming()
+      this.clearPhoto()
+      this.startStriming()
     },
 
     takePhoto() {   
-      if (!this.striming) return this.error = 'Start camera' 
+      if (!this.striming) return this.setError('Start camera')
       var context = this.canvas.getContext('2d')    
       this.width = this.video.clientWidth
       this.height = this.video.clientHeight
@@ -225,19 +242,24 @@ export default {
     },
 
     sendPhoto(){
-      if (!this.striming && !this.image.blob) return this.error = 'Take photo'
+      if (!this.striming && !this.image.blob) return this.setError('Take photo')
     },
   }
 }
 </script>
 
 <style scoped>
+
+.v-enter-active, .v-leave-active {
+  transition: opacity .5s;
+}
+.v-enter, .v-leave-to {
+  opacity: 0;
+}
+
 .camera__container {
   position: relative;
-  /* max-width: 800px;
-  min-width: 290px;
-  margin: 0 auto;
-  padding: 30px 10px 50px 10px; */
+  margin-bottom: 20px;
 }
 
 .camera__header {
@@ -329,6 +351,32 @@ canvas {
   display:none;
 }
 
+.error {
+  margin-bottom: 20px;
+
+}
+
+.error__message {
+  color: #fff;
+  padding: 5px;
+  background-color: red;
+
+}
+
+.show-button {
+  border: none;
+  background-color: green;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hide-button {
+  background-color: red;
+}
+
 .device{
   display: grid;
   grid-template-columns: 100px 1fr;
@@ -351,5 +399,7 @@ canvas {
 .device__value_btn {
   cursor: pointer;
 }
+
+
 
 </style>

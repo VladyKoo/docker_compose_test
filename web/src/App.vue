@@ -53,20 +53,4 @@ body {
   justify-content: center;
   margin-bottom: 20px;
 }
-
-.show-button {
-  border: none;
-  background-color: green;
-  border-radius: 10px;
-  padding: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.show-button:active {
-  transform: scale(0.95);
-}
-.hide-button {
-  background-color: red;
-}
 </style>
