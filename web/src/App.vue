@@ -45,6 +45,6 @@ body {
   max-width: 800px;
   min-width: 290px;
   margin: 0 auto;
-  padding: 30px 10px 50px 10px;
+  padding: 5px 10px 50px 10px;
 }
 </style>

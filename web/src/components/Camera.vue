@@ -25,7 +25,7 @@
           >
             {{ striming ? 'Stop camera' : 'Start camera' }}
           </button>
-          <button class="btn take-button" @click.prevent="takePhoto"><div></div><div></div></button>
+          <button class="btn take-button" @click.prevent="takePhoto"></button>
           <button class="btn send-button" @click.prevent="sendPhoto">Send photo</button>
         </div>
       </div>
@@ -108,11 +108,11 @@ export default {
 
     navigator.mediaDevices.ondevicechange = async (event) => {
       await this.getConnectedDevices('videoinput')
+      this.stopStriming()
       this.startStriming()     
-    }
-
-    await this.getConnectedDevices('videoinput')
+    }   
     
+    await this.getConnectedDevices('videoinput')
   },  
 
   methods: {
@@ -130,11 +130,15 @@ export default {
       }, 4000)
     },
 
-    async getConnectedDevices(type) {     
+    async getConnectedDevices(type = 'videoinput') {     
+      if (this.currentDivice || this.devices.length) return     
       try {
         let devices = await window.navigator.mediaDevices.enumerateDevices()
+        console.log('devices', devices)
         
         let filtredDevices = devices.filter((el) => el.kind === type && el.label && el.deviceId )
+        console.log('filtredDevices', filtredDevices)
+
         if (!filtredDevices.length) return
 
         this.allDevices = filtredDevices
@@ -195,7 +199,7 @@ export default {
       }
 
       window.navigator.mediaDevices.getUserMedia(constraints)
-        .then((mediaStream) => {
+        .then( async(mediaStream) => {
           if ('srcObject' in this.video) {
             this.video.srcObject = mediaStream;
           } else {
@@ -203,6 +207,7 @@ export default {
           }      
           this.stream = mediaStream          
           this.striming = true
+          await this.getConnectedDevices('videoinput')
         })
         .catch((err)=> {
           this.handleError(err)
@@ -210,6 +215,7 @@ export default {
     },
 
     stopStriming(){
+      if (!this.stream) return
       const tracks = this.stream.getTracks()
       tracks.forEach((track) => track.stop())
       this.video.srcObject = null
@@ -312,7 +318,7 @@ export default {
 .camera__footer {
   background-color: #000;
   width: 100%;
-  height: 80px;
+  height: 60px;
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -320,9 +326,8 @@ export default {
 
 .take-button {
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  padding: 0px;
+  width: 40px;
+  height: 40px;
 }
 
 .btn {
