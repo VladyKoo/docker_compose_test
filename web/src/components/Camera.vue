@@ -97,6 +97,7 @@ export default {
       quality: 1,
       type: 'image/png'
     },
+    stream: null,
     striming: false,
     showDevices: false,
   }),
@@ -200,6 +201,7 @@ export default {
           } else {
             this.video.src = URL.createObjectURL(mediaStream);
           }      
+          this.stream = mediaStream          
           this.striming = true
         })
         .catch((err)=> {
@@ -208,7 +210,10 @@ export default {
     },
 
     stopStriming(){
+      const tracks = this.stream.getTracks()
+      tracks.forEach((track) => track.stop())
       this.video.srcObject = null
+      this.stream = null
       this.striming = false
       this.clearPhoto()
     },
