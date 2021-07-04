@@ -6,7 +6,7 @@ WORKDIR /var/web
 
 COPY ./web /var/web
 
-EXPOSE 3000
+EXPOSE 5000
 
 CMD npm i \
 	&& npm run build \

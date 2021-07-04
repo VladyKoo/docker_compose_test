@@ -19,8 +19,13 @@
           <img v-show="image.url" :src="image.url" class="camera__img" alt="Capture image.">           
         </div>
         <div class="camera__footer">
-          <button class="btn start-button" :class="{'stop-button': striming}" @click.prevent="start">Start stream</button>
-          <button class="btn take-button" @click.prevent="take"><div></div><div></div></button>
+          <button class="btn start-button" 
+            :class="{'stop-button': striming}" 
+            @click.prevent="striming ? stopStriming() : startStriming()"
+          >
+            {{ striming ? 'Stop camera' : 'Start camera' }}
+          </button>
+          <button class="btn take-button" @click.prevent="takePhoto"><div></div><div></div></button>
           <button class="btn send-button" @click.prevent="sendPhoto">Send photo</button>
         </div>
       </div>
@@ -138,64 +143,39 @@ export default {
 
       if (!this.error && error && error.constraint && error.constraint === 'facingMode'){
         this.error = 'facingMode'        
-        window.navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-          .then((stream) => {
-            this.video.srcObject = stream
-            this.getConnectedDevices('videoinput')
-            this.striming = true
-          })
-          .catch((err)=> {
-            this.handleError(err)
-          });         
+        const result = window.confirm(this.error)
+        console.log(result)
+        
       }
 
       if (!this.error && error.message === 'Requested device not found' ){
         this.error = error.message  
-        window.navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-          .then((stream) => {
-            this.video.srcObject = stream
-            this.getConnectedDevices('videoinput')
-            this.striming = true
-          })
-          .catch((err)=> {
-            this.handleError(err)
-          });  
+        const result = window.confirm(this.error)
+        console.log(result)        
       }
 
       if (!this.error && error.message === 'Permission denied' ){
         this.error = error.message  
-        window.navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-          .then((stream) => {
-            this.video.srcObject = stream
-            this.getConnectedDevices('videoinput')
-            this.striming = true
-          })
-          .catch((err)=> {
-            this.handleError(err)
-          });  
+        const result = window.confirm(this.error)
+        console.log(result) 
       }
 
     },
 
-    start() {
-      if (this.striming) {
-        this.video.srcObject = null
-        this.striming = false
-        this.clearPhoto()
-        return
-      }
-
+    startStriming() {
       this.video = this.$refs.video
-
-      const video = this.currentDivice && this.currentDivice.deviceId ? { 'deviceId': this.currentDivice.deviceId } : { facingMode: { exact: "environment" } }
       const constraints = {
         audio: false,
-        video
+        video: this.currentDivice && this.currentDivice.deviceId ? { 'deviceId': this.currentDivice.deviceId } : { facingMode: { exact: "environment" } }
       }
+
       window.navigator.mediaDevices.getUserMedia(constraints)
-        .then((stream) => {
-          this.video.srcObject = stream
-          this.getConnectedDevices('videoinput')
+        .then((mediaStream) => {
+          if ('srcObject' in this.video) {
+            this.video.srcObject = mediaStream;
+          } else {
+            this.video.src = URL.createObjectURL(mediaStream);
+          }      
           this.striming = true
         })
         .catch((err)=> {
@@ -203,22 +183,27 @@ export default {
         });  
     },
 
-    clearPhoto() {
-      this.image.url = ''
-      this.image.blob = null
+    stopStriming(){
+      this.video.srcObject = null
+      this.striming = false
+      this.clearPhoto()
     },
 
     changeCameras(){
+      this.stopStriming()
+
+      const newArr = []
+
       if (!this.currentDivice || this.devices.length < 2) return 
       const newCurrentDivice = this.devices.filter((el) => el.deviceId !== this.currentDivice.deviceId)
       this.currentDivice = newCurrentDivice[0]
-
-      this.striming = false
-      this.clearPhoto()
-      this.start()
+      
+      // this.clearPhoto()
+      // this.startStriming()
     },
 
-    take() {      
+    takePhoto() {   
+      if (!this.striming) return this.error = 'Start camera' 
       var context = this.canvas.getContext('2d')    
       this.width = this.video.clientWidth
       this.height = this.video.clientHeight
@@ -227,14 +212,20 @@ export default {
       this.canvas.height = this.height
       context.drawImage(this.video, 0, 0, this.width, this.height)
 
-      this.canvas.toBlob((blob)=>{
-        console.log(blob)        
+      this.canvas.toBlob((blob)=>{       
         this.image.blob = blob
         this.image.url = URL.createObjectURL(blob)
       }, this.image.type, this.image.quality)  
     },
 
-    sendPhoto(){},
+    clearPhoto() {
+      this.image.url = ''
+      this.image.blob = null
+    },
+
+    sendPhoto(){
+      if (!this.striming && !this.image.blob) return this.error = 'Take photo'
+    },
   }
 }
 </script>
@@ -242,10 +233,10 @@ export default {
 <style scoped>
 .camera__container {
   position: relative;
-  max-width: 800px;
+  /* max-width: 800px;
   min-width: 290px;
   margin: 0 auto;
-  padding: 30px 10px 50px 10px;
+  padding: 30px 10px 50px 10px; */
 }
 
 .camera__header {
@@ -288,8 +279,6 @@ export default {
 
 .camera__footer {
   background-color: #000;
-  /* border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px; */
   width: 100%;
   height: 80px;
   display: flex;
@@ -298,42 +287,19 @@ export default {
 }
 
 .take-button {
-  position: relative;
   border-radius: 50%;
   width: 50px;
   height: 50px;
   padding: 0px;
-  cursor: pointer;
-}
-
-.take-button div:nth-child(1) {
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  width: 100%;
-  height: 100%;
-  background-color: #000;
-}
-
-.take-button div:nth-child(2) {
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  border-radius: 50%;
-  width: 100%;
-  height: 100%;
-  background-color: #fff;
-  transition: all 0.2s ease-in;
-}
-
-.take-button:active div:nth-child(2){
-  transform: scale(0.75);
 }
 
 .btn {
   border: none;
+  cursor: pointer;
+}
+
+.btn:active {
+  transform: scale(0.95);
 }
 
 .start-button {
