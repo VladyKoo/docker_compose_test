@@ -66,6 +66,7 @@
             <div class="device__title">All devices:</div>
             <div v-for="(device, index) of allDevices" :key="index" class="device__list">
               <span class="device__value device__value_btn" @click.prevent="currentDivice = device">{{device.label }}</span>
+              <span class="device__value" >{{device.deviceId }}</span>
             </div>
           </div>
         </div> 
@@ -133,12 +134,8 @@ export default {
     async getConnectedDevices(type = 'videoinput') {     
       if (this.currentDivice || this.devices.length) return     
       try {
-        let devices = await window.navigator.mediaDevices.enumerateDevices()
-        console.log('devices', devices)
-        
+        let devices = await window.navigator.mediaDevices.enumerateDevices()        
         let filtredDevices = devices.filter((el) => el.kind === type && el.label && el.deviceId )
-        console.log('filtredDevices', filtredDevices)
-
         if (!filtredDevices.length) return
 
         this.allDevices = filtredDevices
