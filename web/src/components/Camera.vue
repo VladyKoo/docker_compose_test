@@ -88,6 +88,8 @@ export default {
 
   mounted(){  
     this.canvas = this.$refs.canvas
+    this.video = this.$refs.video
+
     this.getConnectedDevices('videoinput')
   },
 
@@ -163,7 +165,6 @@ export default {
     },
 
     startStriming() {
-      this.video = this.$refs.video
       const constraints = {
         audio: false,
         video: this.currentDivice && this.currentDivice.deviceId ? { 'deviceId': this.currentDivice.deviceId } : { facingMode: { exact: "environment" } }
