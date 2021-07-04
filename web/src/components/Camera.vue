@@ -73,6 +73,9 @@
         <div v-else >Don't detected devises</div>
       </div>
     </transition>
+    <div v-for="(err, index) of errors" :key="index">
+      <div>{{err.message}}</div>
+    </div>
 
   </div>
 </template>
@@ -101,19 +104,28 @@ export default {
     stream: null,
     striming: false,
     showDevices: false,
+    errors: []
   }),
-
+  
   async mounted(){  
     this.canvas = this.$refs.canvas
     this.video = this.$refs.video
+
+    this.$errors = (err, info) => {      
+      this.errors.push(err)
+    }
 
     navigator.mediaDevices.ondevicechange = async (event) => {
       await this.getConnectedDevices('videoinput')
       this.stopStriming()
       this.startStriming()     
     }   
+
+    window.onerror = (errorMsg, url, lineNumber)=>{
+      this.errors.push({errorMsg, url, lineNumber})
+    }
     
-    await this.getConnectedDevices('videoinput')
+    // await this.getConnectedDevices('videoinput')
   },  
 
   methods: {
@@ -212,6 +224,7 @@ export default {
     },
 
     stopStriming(){
+      stream = 5
       if (!this.stream) return
       const tracks = this.stream.getTracks()
       tracks.forEach((track) => track.stop())
