@@ -2,25 +2,58 @@
   <div>
     <div class="camera">
       <div class="camera__container">
-          <div class="camera__header">
-            <div class="change-button" @click.prevent="changeCameras">
-              <svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 20 20" height="48px" viewBox="0 0 20 20" width="48px" fill="#000000">
-                <g><rect fill="none" height="20" width="20" x="0"/></g><g><g><path d="M16,5h-2l-2-2H8L6,5H4C3.45,5,3,5.45,3,6v9c0,0.55,0.45,1,1,1h12c0.55,0,1-0.45,1-1V6C17,5.45,16.55,5,16,5z M16,15H4V6h2 h0.41l0.29-0.29L8.41,4h3.17l1.71,1.71L13.59,6H14h2V15z"/><path d="M10,6C9.28,6,8.62,6.2,8.04,6.54l0.73,0.73C9.15,7.1,9.56,7,10,7c1.65,0,3,1.35,3,3h-1.5l2,2l2-2H14C14,7.79,12.21,6,10,6 z"/><path d="M10,13c-1.65,0-3-1.35-3-3h1.5l-2-2l-2,2H6c0,2.21,1.79,4,4,4c0.72,0,1.38-0.2,1.96-0.54l-0.73-0.73 C10.85,12.9,10.44,13,10,13z"/></g></g>
-              </svg>
-            </div>
-            <div class="clear-button" @click.prevent="clearPhoto">
-              <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 0 24 24" width="48px" fill="#000000">
-                <path d="M0 0h24v24H0V0z" fill="none"/><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
-              </svg>
-            </div>
+        <div class="camera__header">
+          <div class="change-button" @click.prevent="changeCameras">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              enable-background="new 0 0 20 20"
+              height="48px"
+              viewBox="0 0 20 20"
+              width="48px"
+              fill="#000000"
+            >
+              <g><rect fill="none" height="20" width="20" x="0" /></g>
+              <g>
+                <g>
+                  <path
+                    d="M16,5h-2l-2-2H8L6,5H4C3.45,5,3,5.45,3,6v9c0,0.55,0.45,1,1,1h12c0.55,0,1-0.45,1-1V6C17,5.45,16.55,5,16,5z M16,15H4V6h2 h0.41l0.29-0.29L8.41,4h3.17l1.71,1.71L13.59,6H14h2V15z"
+                  />
+                  <path
+                    d="M10,6C9.28,6,8.62,6.2,8.04,6.54l0.73,0.73C9.15,7.1,9.56,7,10,7c1.65,0,3,1.35,3,3h-1.5l2,2l2-2H14C14,7.79,12.21,6,10,6 z"
+                  />
+                  <path
+                    d="M10,13c-1.65,0-3-1.35-3-3h1.5l-2-2l-2,2H6c0,2.21,1.79,4,4,4c0.72,0,1.38-0.2,1.96-0.54l-0.73-0.73 C10.85,12.9,10.44,13,10,13z"
+                  />
+                </g>
+              </g>
+            </svg>
           </div>
+          <div class="clear-button" @click.prevent="clearPhoto">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="48px"
+              viewBox="0 0 24 24"
+              width="48px"
+              fill="#000000"
+            >
+              <path d="M0 0h24v24H0V0z" fill="none" />
+              <path
+                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
+              />
+            </svg>
+          </div>
+        </div>
         <div class="camera__main">
-          <video ref="video" class="camera__video" autoplay playsinline>Video stream not available.</video>
-          <img v-show="image.url" :src="image.url" class="camera__img" alt="Capture image.">           
+          <div class="camera__video-container">
+            <video ref="video" class="camera__video" autoplay playsinline></video>
+          </div>
+
+          <img v-if="image.url" :src="image.url" class="camera__img" alt="Capture image." />
         </div>
         <div class="camera__footer">
-          <button class="btn start-button" 
-            :class="{'stop-button': striming}" 
+          <button
+            class="btn start-button"
+            :class="{ 'stop-button': striming }"
             @click.prevent="striming ? stopStriming() : startStriming()"
           >
             {{ striming ? 'Stop camera' : 'Start camera' }}
@@ -32,7 +65,6 @@
     </div>
     <canvas ref="canvas"></canvas>
 
-
     <transition>
       <div v-show="error" class="error">
         <span>Error: </span>
@@ -41,17 +73,18 @@
     </transition>
 
     <div v-if="photoUrl">
-      <a :href="photoUrl" target="_blank">{{photoUrl}}</a>
+      <a :href="photoUrl" target="_blank">{{ photoUrl }}</a>
     </div>
 
-    <!-- <button
+    <button
+      v-if="showDevices"
       class="btn show-button"
       :class="{'hide-button': showDevices}"
       @click="showDevices = !showDevices"
     >
       {{ showDevices ? 'Hidden devices' : 'Show devices' }}
-    </button> -->
-    <!-- <transition>
+    </button>
+    <transition>
       <div v-if="showDevices"> 
         <div v-if="devices.length || allDevices.length">              
           <div v-if="currentDevice" class="device">
@@ -76,82 +109,67 @@
         </div> 
         <div v-else >Don't detected devises</div>
       </div>
-    </transition> -->
-    <div v-for="(err, index) of errors" :key="index">
-      <div>{{err.message}}</div>
-    </div>
+    </transition>
+
+    <!-- <div v-for="(err, index) of errors" :key="index">
+      <div>{{ err.message }}</div>
+    </div> -->
 
   </div>
 </template>
 
 <script>
-import axios from 'axios'
-
 export default {
   name: 'Camera',
+
   data: () => ({
-    url: 'https://vladykoo.ru/api',
     width: 0,
     height: 0,
     video: null,
     canvas: null,
+
     error: null,
+    errors: [],
+
     devices: [],
     allDevices: [],
     currentDevice: null,
+    showDevices: false,
+
     image: {
       blob: null,
       url: '',
       quality: 1,
-      type: 'image/png'
+      type: 'image/png',
     },
     stream: null,
     striming: false,
-    showDevices: false,
-    errors: [],
-    photoUrl: ''
+
+    photoUrl: '',
   }),
-  
-  mounted(){  
+
+  mounted() {
     this.canvas = this.$refs.canvas
     this.video = this.$refs.video
 
-    this.$errors = (err, info) => {      
+    this.$errors = (err, info) => {
       this.errors.push(err)
     }
-
-    navigator.mediaDevices.ondevicechange = async (event) => {
-      await this.getConnectedDevices('videoinput')
-      this.stopStriming()
-      this.startStriming()     
-    }   
-
-    window.onerror = (errorMsg, url, lineNumber)=>{
-      this.errors.push({errorMsg, url, lineNumber})
-    }
-
-  },  
+  },
 
   methods: {
-    async get(){
-      const values = await axios.get(this.url) 
-    },
-    async post(){
-      const values = await axios.post(this.url, { value: this.input })     
-    },
-
     setError(err) {
       this.error = err
-      setTimeout(()=>{
+      setTimeout(() => {
         this.error = null
       }, 4000)
     },
 
-    async getConnectedDevices(type = 'videoinput') {     
-      if (this.currentDevice || this.devices.length) return     
+    async getConnectedDevices(type = 'videoinput') {
+      if (this.currentDevice || this.devices.length) return
       try {
-        let devices = await window.navigator.mediaDevices.enumerateDevices()        
-        let filtredDevices = devices.filter((el) => el.kind === type && el.label && el.deviceId )
+        let devices = await window.navigator.mediaDevices.enumerateDevices()
+        let filtredDevices = devices.filter((el) => el.kind === type && el.label && el.deviceId)
         if (!filtredDevices.length) return
 
         this.allDevices = filtredDevices
@@ -166,13 +184,13 @@ export default {
               back.push(el)
             } else if (str.includes('front') || str.includes('передней')) {
               front.push(el)
-            } else undef.push (el) 
+            } else undef.push(el)
           })
 
           const sortFunc = (a, b) => {
-            if (a.label < b.label) return -1            
+            if (a.label < b.label) return -1
             if (a.label > b.label) return 1
-            return 0;
+            return 0
           }
 
           front = front.sort(sortFunc)
@@ -182,52 +200,54 @@ export default {
         } else this.devices = filtredDevices
 
         this.currentDevice = this.devices[0]
-
       } catch (error) {
         this.setError(error.message)
-      }       
+      }
     },
 
-    handleError(error){
+    handleError(error) {
       console.log(error)
 
-      if (!this.error && error && error.constraint && error.constraint === 'facingMode'){
-        this.setError('facingMode' )
+      if (!this.error && error && error.constraint && error.constraint === 'facingMode') {
+        this.setError('facingMode')
       }
 
-      if (!this.error && error.message === 'Requested device not found' ){
+      if (!this.error && error.message === 'Requested device not found') {
         this.setError(error.message)
       }
 
-      if (!this.error && error.message === 'Permission denied' ){
+      if (!this.error && error.message === 'Permission denied') {
         this.setError(error.message)
       }
-
     },
 
-    startStriming() {      
+    startStriming() {
       const constraints = {
         audio: false,
-        video: this.currentDevice && this.currentDevice.deviceId ? { 'deviceId': { exact: this.currentDevice.deviceId } } : true
+        video:
+          this.currentDevice && this.currentDevice.deviceId
+            ? { deviceId: { exact: this.currentDevice.deviceId } }
+            : true,
       }
 
-      window.navigator.mediaDevices.getUserMedia(constraints)
-        .then( async (mediaStream) => {
+      window.navigator.mediaDevices
+        .getUserMedia(constraints)
+        .then(async (mediaStream) => {
           if ('srcObject' in this.video) {
-            this.video.srcObject = mediaStream;
+            this.video.srcObject = mediaStream
           } else {
-            this.video.src = URL.createObjectURL(mediaStream);
-          }      
-          this.stream = mediaStream          
+            this.video.src = URL.createObjectURL(mediaStream)
+          }
+          this.stream = mediaStream
           this.striming = true
           await this.getConnectedDevices('videoinput')
         })
-        .catch((err)=> {
+        .catch((err) => {
           this.handleError(err)
-        });  
+        })
     },
 
-    stopStriming(){
+    stopStriming() {
       if (!this.stream) return
       const tracks = this.stream.getTracks()
       tracks.forEach((track) => track.stop())
@@ -237,19 +257,22 @@ export default {
       this.clearPhoto()
     },
 
-    changeCameras(){      
-      if (!this.currentDevice || this.devices.length < 2) return this.setError('You have only one camera')
+    changeCameras() {
+      if (!this.currentDevice || this.devices.length < 2)
+        return this.setError('You have only one camera')
       this.stopStriming()
 
-      const newcurrentDevice = this.devices.filter((el) => el.deviceId !== this.currentDevice.deviceId)
+      const newcurrentDevice = this.devices.filter(
+        (el) => el.deviceId !== this.currentDevice.deviceId
+      )
       this.currentDevice = newcurrentDevice[0]
 
       this.startStriming()
     },
 
-    takePhoto() {   
+    takePhoto() {
       if (!this.striming) return this.setError('Start camera')
-      var context = this.canvas.getContext('2d')    
+      var context = this.canvas.getContext('2d')
       this.width = this.video.clientWidth
       this.height = this.video.clientHeight
 
@@ -257,10 +280,14 @@ export default {
       this.canvas.height = this.height
       context.drawImage(this.video, 0, 0, this.width, this.height)
 
-      this.canvas.toBlob((blob)=>{       
-        this.image.blob = blob
-        this.image.url = URL.createObjectURL(blob)
-      }, this.image.type, this.image.quality)  
+      this.canvas.toBlob(
+        (blob) => {
+          this.image.blob = blob
+          this.image.url = URL.createObjectURL(blob)
+        },
+        this.image.type,
+        this.image.quality
+      )
     },
 
     clearPhoto() {
@@ -269,35 +296,43 @@ export default {
       this.image.blob = null
     },
 
-    async sendPhoto(){
-      if (!this.striming && !this.image.blob) return this.setError('Take photo')
+    async sendPhoto() {
+      if (!this.striming) return this.setError('Start camera')
+      if (!this.image.blob) return this.setError('Take photo')
 
+      const formData = new FormData()
+      formData.append('image', this.image.blob)
       const config = {
-        headers: { 'Content-Type': 'multipart/form-data'}
+        headers: { 'Content-Type': 'multipart/form-data' },
       }
-      const formData = new FormData();
-      formData.append("image", this.image.blob);
 
-      const response = await axios.post(this.url, formData, config)   
-      if (!response) return 
-      this.photoUrl = `https://vladykoo.ru${response.data.url}`      
+      const response = await this.$axios.post('/api/upload', formData, config)
+
+      if (!response && !response.data && !response.data.success)
+        return this.setError(response.data.message)
+      this.photoUrl = `${process.env.VUE_APP_BASE_URL}/${response.data.url}`
+
+      this.clearPhoto()
     },
-  }
+  },
 }
 </script>
 
 <style scoped>
-
-.v-enter-active, .v-leave-active {
-  transition: opacity .5s;
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.5s;
 }
-.v-enter, .v-leave-to {
+.v-enter,
+.v-leave-to {
   opacity: 0;
 }
 
 .camera__container {
   position: relative;
   margin-bottom: 20px;
+  box-shadow: 0px 5px 10px 2px rgba(34, 60, 80, 0.2);
+
 }
 
 .camera__header {
@@ -309,22 +344,24 @@ export default {
 }
 
 .change-button path {
-  fill: #fff
+  fill: #fff;
 }
 
 .clear-button path:nth-child(2) {
-  fill: #fff
+  fill: #fff;
 }
 
-.change-button:active, .clear-button:active {
- transform: scale(.9);
+.change-button:active,
+.clear-button:active {
+  transform: scale(0.9);
 }
 
 .camera__main {
   position: relative;
-  border: 1px solid #000;
-  width: 100%;
-  background-color: grey;
+}
+
+.camera__video-container {
+  display: flex;
 }
 
 .camera__video {
@@ -378,7 +415,7 @@ export default {
 
 .send-button {
   background-color: blue;
-  border-radius: 10px;  
+  border-radius: 10px;
   padding: 10px;
   display: flex;
   justify-content: center;
@@ -386,19 +423,17 @@ export default {
 }
 
 canvas {
-  display:none;
+  display: none;
 }
 
 .error {
   margin-bottom: 20px;
-
 }
 
 .error__message {
   color: #fff;
   padding: 5px;
   background-color: red;
-
 }
 
 .show-button {
@@ -416,7 +451,7 @@ canvas {
   background-color: red;
 }
 
-.device{
+.device {
   margin-bottom: 20px;
 }
 
@@ -427,7 +462,7 @@ canvas {
 .device__list {
   display: flex;
   flex-direction: column;
-  align-items:flex-start
+  align-items: flex-start;
 }
 
 .device__value {
@@ -440,7 +475,4 @@ canvas {
 .device__value_btn {
   cursor: pointer;
 }
-
-
-
 </style>
