@@ -86,7 +86,7 @@ import axios from 'axios'
 export default {
   name: 'Camera',
   data: () => ({
-    url: 'http://localhost:80/api',
+    url: 'http://localhost:5000/api',
     width: 0,
     height: 0,
     video: null,
@@ -264,8 +264,18 @@ export default {
       this.image.blob = null
     },
 
-    sendPhoto(){
+    async sendPhoto(){
       if (!this.striming && !this.image.blob) return this.setError('Take photo')
+
+      const config = {
+        headers: { 'Content-Type': 'multipart/form-data'}
+      }
+      const formData = new FormData();
+      formData.append("image", this.image.blob);
+
+      const values = await axios.post(this.url, formData, config)     
+      console.log(values)
+      
     },
   }
 }
@@ -336,6 +346,7 @@ export default {
   border-radius: 50%;
   width: 40px;
   height: 40px;
+  background-color: #fff;
 }
 
 .btn {
