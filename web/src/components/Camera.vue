@@ -41,7 +41,7 @@
     </transition>
 
     <div v-if="photoUrl">
-      <a :href="photoUrl">{{photoUrl}}</a>
+      <a :href="photoUrl" target="_blank">{{photoUrl}}</a>
     </div>
 
     <!-- <button
