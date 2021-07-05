@@ -40,14 +40,18 @@
       </div>
     </transition>
 
-    <button
+    <div v-if="photoUrl">
+      <a :href="photoUrl">{{photoUrl}}</a>
+    </div>
+
+    <!-- <button
       class="btn show-button"
       :class="{'hide-button': showDevices}"
       @click="showDevices = !showDevices"
     >
       {{ showDevices ? 'Hidden devices' : 'Show devices' }}
-    </button>
-    <transition>
+    </button> -->
+    <!-- <transition>
       <div v-if="showDevices"> 
         <div v-if="devices.length || allDevices.length">              
           <div v-if="currentDevice" class="device">
@@ -72,7 +76,7 @@
         </div> 
         <div v-else >Don't detected devises</div>
       </div>
-    </transition>
+    </transition> -->
     <div v-for="(err, index) of errors" :key="index">
       <div>{{err.message}}</div>
     </div>
@@ -86,7 +90,7 @@ import axios from 'axios'
 export default {
   name: 'Camera',
   data: () => ({
-    url: 'http://localhost:5000/api',
+    url: 'https://vladykoo.ru/api',
     width: 0,
     height: 0,
     video: null,
@@ -104,7 +108,8 @@ export default {
     stream: null,
     striming: false,
     showDevices: false,
-    errors: []
+    errors: [],
+    photoUrl: ''
   }),
   
   mounted(){  
@@ -273,9 +278,9 @@ export default {
       const formData = new FormData();
       formData.append("image", this.image.blob);
 
-      const values = await axios.post(this.url, formData, config)     
-      console.log(values)
-      
+      const response = await axios.post(this.url, formData, config)   
+      if (!response) return 
+      this.photoUrl = `https://vladykoo.ru${response.data.url}`      
     },
   }
 }
