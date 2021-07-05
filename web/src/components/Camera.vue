@@ -50,22 +50,22 @@
     <transition>
       <div v-if="showDevices"> 
         <div v-if="devices.length || allDevices.length">              
-          <div v-if="currentDivice" class="device">
+          <div v-if="currentDevice" class="device">
             <div class="device__title">Current device</div>
             <div>
-              <span class="device__value" >{{currentDivice.label }}</span>
+              <span class="device__value" >{{currentDevice.label }}</span>
             </div>
           </div>
           <div v-if="devices.length" class="device">
             <div class="device__title">Available devices:</div>
             <div v-for="(device, index) of devices" :key="index" class="device__list">
-              <span class="device__value device__value_btn" @click.prevent="currentDivice = device">{{device.label }}</span>
+              <span class="device__value device__value_btn" @click.prevent="currentDevice = device">{{device.label }}</span>
             </div>
           </div>
           <div v-if="allDevices.length" class="device">
             <div class="device__title">All devices:</div>
             <div v-for="(device, index) of allDevices" :key="index" class="device__list">
-              <span class="device__value device__value_btn" @click.prevent="currentDivice = device">{{device.label }}</span>
+              <span class="device__value device__value_btn" @click.prevent="currentDevice = device">{{device.label }}</span>
               <span class="device__value" >{{device.deviceId }}</span>
             </div>
           </div>
@@ -94,7 +94,7 @@ export default {
     error: null,
     devices: [],
     allDevices: [],
-    currentDivice: null,
+    currentDevice: null,
     image: {
       blob: null,
       url: '',
@@ -107,7 +107,7 @@ export default {
     errors: []
   }),
   
-  async mounted(){  
+  mounted(){  
     this.canvas = this.$refs.canvas
     this.video = this.$refs.video
 
@@ -124,8 +124,7 @@ export default {
     window.onerror = (errorMsg, url, lineNumber)=>{
       this.errors.push({errorMsg, url, lineNumber})
     }
-    
-    // await this.getConnectedDevices('videoinput')
+
   },  
 
   methods: {
@@ -144,7 +143,7 @@ export default {
     },
 
     async getConnectedDevices(type = 'videoinput') {     
-      if (this.currentDivice || this.devices.length) return     
+      if (this.currentDevice || this.devices.length) return     
       try {
         let devices = await window.navigator.mediaDevices.enumerateDevices()        
         let filtredDevices = devices.filter((el) => el.kind === type && el.label && el.deviceId )
@@ -177,7 +176,7 @@ export default {
           this.devices = [front[0], back[0]]
         } else this.devices = filtredDevices
 
-        this.currentDivice = this.devices[0]
+        this.currentDevice = this.devices[0]
 
       } catch (error) {
         this.setError(error.message)
@@ -204,11 +203,11 @@ export default {
     startStriming() {      
       const constraints = {
         audio: false,
-        video: this.currentDivice && this.currentDivice.deviceId ? { 'deviceId': this.currentDivice.deviceId } : true
+        video: this.currentDevice && this.currentDevice.deviceId ? { 'deviceId': { exact: this.currentDevice.deviceId } } : true
       }
 
       window.navigator.mediaDevices.getUserMedia(constraints)
-        .then( async(mediaStream) => {
+        .then( async (mediaStream) => {
           if ('srcObject' in this.video) {
             this.video.srcObject = mediaStream;
           } else {
@@ -224,7 +223,6 @@ export default {
     },
 
     stopStriming(){
-      stream = 5
       if (!this.stream) return
       const tracks = this.stream.getTracks()
       tracks.forEach((track) => track.stop())
@@ -235,11 +233,11 @@ export default {
     },
 
     changeCameras(){      
-      if (!this.currentDivice || this.devices.length < 2) return this.setError('You have only one camera')
+      if (!this.currentDevice || this.devices.length < 2) return this.setError('You have only one camera')
       this.stopStriming()
 
-      const newCurrentDivice = this.devices.filter((el) => el.deviceId !== this.currentDivice.deviceId)
-      this.currentDivice = newCurrentDivice[0]
+      const newcurrentDevice = this.devices.filter((el) => el.deviceId !== this.currentDevice.deviceId)
+      this.currentDevice = newcurrentDevice[0]
 
       this.startStriming()
     },
